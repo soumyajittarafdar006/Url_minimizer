@@ -1,0 +1,35 @@
+# Compiled binaries and build artifacts
+tinyurl
+tinyurl.exe
+*.exe
+__pycache__/
+test_*_runner
+test_runner
+asan_*
+*.o
+*.out
+bin/
+obj/
+*.dSYM/
+
+# Runtime data files & temporary persistence files
+*.dat
+data/*.dat
+data/*.tmp
+data/*.dat.tmp
+*.tmp
+!data/.gitkeep
+!tests/.gitkeep
+
+# Core dumps and debug traces
+core
+vgcore.*
+
+# Editor and OS junk files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

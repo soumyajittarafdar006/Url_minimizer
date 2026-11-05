@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TinyURL – DSA-Based URL Shortener in C</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <a href="#home" class="brand-link">
+          <span class="brand-text">Tiny<span class="brand-accent">URL</span></span>
+        </a>
+        <span class="brand-badge">DSA in C</span>
+      </div>
+      <nav class="nav-menu" id="navMenu">
+        <a href="#home" class="nav-link active" data-section="home">Home</a>
+        <a href="#my-urls" class="nav-link" data-section="my-urls">My URLs</a>
+        <a href="#search" class="nav-link" data-section="search">Search</a>
+        <a href="#statistics" class="nav-link" data-section="statistics">Statistics</a>
+        <a href="#about" class="nav-link" data-section="about">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Notification Toast Container -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <!-- Main Content Container -->
+  <main class="main-container">
+
+    <!-- HOME / URL SHORTENER SECTION -->
+    <section id="home" class="page-section active">
+      <div class="hero">
+        <div class="hero-badge">Prime Modulo Hash Table &bull; Base-62 Encoding</div>
+        <h1 class="hero-title">Shorten Your Long URLs</h1>
+        <p class="hero-subtitle">Make your links shorter, simpler and easier to share.</p>
+
+        <!-- Shortener Form -->
+        <form class="shorten-form" id="shortenForm" novalidate>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            <input 
+              type="url" 
+              id="longUrlInput" 
+              class="url-input" 
+              placeholder="Paste your long URL here... (e.g. https://example.com/long/path)" 
+              required
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button type="submit" id="shortenBtn" class="btn btn-primary">
+              <span class="btn-text">Shorten URL</span>
+              <span class="btn-spinner hidden"></span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Inline Error Message -->
+        <div id="shortenError" class="alert-message alert-error hidden"></div>
+
+        <!-- Result Card -->
+        <div id="resultCard" class="result-card hidden">
+          <div class="result-header">
+            <span class="result-tag">Shortened Successfully</span>
+            <span class="result-clicks" id="resultClicks">0 Clicks</span>
+          </div>
+
+          <div class="result-row">
+            <div class="result-label">Original URL:</div>
+            <div class="result-value">
+              <a href="#" id="resultOriginalUrl" target="_blank" rel="noopener noreferrer" class="link-truncate"></a>
+            </div>
+          </div>
+
+          <div class="result-row">
+            <div class="result-label">Short URL:</div>
+            <div class="result-value short-url-display">
+              <input type="text" id="resultShortUrl" readonly class="short-url-input" />
+            </div>
+          </div>
+
+          <div class="result-actions">
+            <button type="button" id="copyResultBtn" class="btn btn-secondary">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Copy Link
+            </button>
+            <a href="#" id="openResultBtn" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+              Open Link
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MY URLS SECTION -->
+    <section id="my-urls" class="page-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">My URLs</h2>
+          <p class="section-subtitle">All active URL records stored in the C separate-chaining hash table.</p>
+        </div>
+        <div class="section-actions">
+          <button type="button" id="refreshListBtn" class="btn btn-secondary">
+            <svg class="refresh-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            Refresh URL List
+          </button>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="data-table" id="urlsTable">
+            <thead>
+              <tr>
+                <th style="width: 80px;">No.</th>
+                <th style="width: 140px;">Short Code</th>
+                <th>Original URL</th>
+                <th style="width: 120px;" class="text-center">Clicks</th>
+                <th style="width: 220px;" class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="urlsTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        <!-- Empty State Message -->
+        <div id="emptyListState" class="empty-state hidden">
+          <svg class="empty-icon" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+          </svg>
+          <p class="empty-text">No URLs have been shortened yet.</p>
+          <a href="#home" class="btn btn-secondary btn-sm" id="emptyShortenLink">Shorten your first URL</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEARCH SECTION -->
+    <section id="search" class="page-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Search URLs</h2>
+          <p class="section-subtitle">Search stored records via C hash lookup or linear URL scanning without altering click counters.</p>
+        </div>
+      </div>
+
+      <div class="search-card">
+        <div class="search-toggle">
+          <button type="button" class="toggle-btn active" id="searchModeCodeBtn" data-mode="code">Search by Short Code</button>
+          <button type="button" class="toggle-btn" id="searchModeUrlBtn" data-mode="url">Search by Original URL</button>
+        </div>
+
+        <form id="searchForm" class="search-form" novalidate>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+              type="text" 
+              id="searchInput" 
+              class="url-input" 
+              placeholder="Enter short code to search (e.g. 1)..." 
+              required
+              autocomplete="off"
+            />
+            <button type="submit" id="searchBtn" class="btn btn-primary">
+              <span class="btn-text">Search</span>
+              <span class="btn-spinner hidden"></span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Search Status / Not Found Container -->
+        <div id="searchMessage" class="alert-message hidden"></div>
+
+        <!-- Search Result Card -->
+        <div id="searchResultCard" class="result-card hidden">
+          <div class="result-header">
+            <span class="result-tag">Match Found</span>
+            <span class="result-clicks" id="searchClicks">0 Clicks</span>
+          </div>
+
+          <div class="result-row">
+            <div class="result-label">Short Code:</div>
+            <div class="result-value">
+              <code class="code-badge-inline" id="searchShortCode"></code>
+            </div>
+          </div>
+
+          <div class="result-row">
+            <div class="result-label">Original URL:</div>
+            <div class="result-value">
+              <a href="#" id="searchOriginalUrl" target="_blank" rel="noopener noreferrer" class="link-truncate"></a>
+            </div>
+          </div>
+
+          <div class="result-row">
+            <div class="result-label">Short Link:</div>
+            <div class="result-value">
+              <input type="text" id="searchShortUrl" readonly class="short-url-input" />
+            </div>
+          </div>
+
+          <div class="result-actions">
+            <button type="button" id="copySearchBtn" class="btn btn-secondary">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Copy Link
+            </button>
+            <a href="#" id="openSearchBtn" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+              Open Link
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATISTICS SECTION -->
+    <section id="statistics" class="page-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Statistics & Collision Analysis</h2>
+          <p class="section-subtitle">Live Data Structures and Algorithms metrics calculated by the C Hash Table backend.</p>
+        </div>
+        <div class="section-actions">
+          <button type="button" id="refreshStatsBtn" class="btn btn-secondary">
+            <svg class="refresh-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            Refresh Statistics
+          </button>
+        </div>
+      </div>
+
+      <!-- 6 Metrics Cards Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total URLs Stored</div>
+          <div class="stat-value" id="statTotalRecords">0</div>
+          <div class="stat-desc">Active nodes across all chains</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Total Occupied Buckets</div>
+          <div class="stat-value" id="statOccupiedBuckets">0</div>
+          <div class="stat-desc">Out of 101 prime capacity</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Total Collided Buckets</div>
+          <div class="stat-value" id="statCollidedBuckets">0</div>
+          <div class="stat-desc">Buckets with chain length &gt; 1</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Total Collisions</div>
+          <div class="stat-value" id="statCollisions">0</div>
+          <div class="stat-desc">Total collided key insertions</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Maximum Chain Length</div>
+          <div class="stat-value" id="statMaxChain">0</div>
+          <div class="stat-desc">Deepest linked-list traversal</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Load Factor (&alpha;)</div>
+          <div class="stat-value" id="statLoadFactor">0.0000</div>
+          <div class="stat-desc">Ratio of records to TABLE_SIZE</div>
+        </div>
+      </div>
+
+      <!-- Hash Table Visualizer -->
+      <div class="visualizer-card">
+        <div class="visualizer-header">
+          <div>
+            <h3 class="visualizer-title">Hash Table Bucket Distribution (101 Buckets)</h3>
+            <p class="visualizer-subtitle">Visual representation of separate chaining across prime capacity <code>TABLE_SIZE = 101</code>.</p>
+          </div>
+          <div class="visualizer-legend">
+            <span class="legend-item"><span class="legend-dot dot-empty"></span> Empty (0)</span>
+            <span class="legend-item"><span class="legend-dot dot-occupied"></span> Stored (1)</span>
+            <span class="legend-item"><span class="legend-dot dot-collided"></span> Collided (&gt;1)</span>
+          </div>
+        </div>
+
+        <div class="bucket-grid" id="bucketGrid">
+          <!-- 101 bucket cells generated by JS -->
+        </div>
+
+        <div class="bucket-inspector" id="bucketInspector">
+          <span class="inspector-hint">Click on any bucket cell above to inspect its linked list chain details.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section id="about" class="page-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">About TinyURL</h2>
+          <p class="section-subtitle">Academic Data Structures and Algorithms Project</p>
+        </div>
+      </div>
+
+      <div class="about-card">
+        <div class="about-quote">
+          <p class="quote-text">
+            &ldquo;TinyURL is a Data Structures and Algorithms project implemented in C. It demonstrates URL shortening using hash tables, separate chaining, singly linked lists and Base-62 encoding. The application also supports URL searching, deletion, click tracking, file persistence and collision analysis.&rdquo;
+          </p>
+        </div>
+
+        <div class="concept-grid">
+          <div class="concept-item">
+            <div class="concept-title">
+              <span class="concept-number">1</span>
+              <span>Hash Table Architecture</span>
+            </div>
+            <p class="concept-text">
+              Utilizes a fixed prime array of <code>TABLE_SIZE = 101</code> bucket heads. Prime table sizes prevent arithmetic clustering when modulo arithmetic is applied to uniform hash keys.
+            </p>
+          </div>
+
+          <div class="concept-item">
+            <div class="concept-title">
+              <span class="concept-number">2</span>
+              <span>Polynomial Rolling Hash</span>
+            </div>
+            <p class="concept-text">
+              Implements Horner's rule with prime multiplier 31: <code>hash = (hash * 31 + char) % 101</code>. Provides uniform distribution across ASCII alphanumeric characters in <code>O(k)</code> time.
+            </p>
+          </div>
+
+          <div class="concept-item">
+            <div class="concept-title">
+              <span class="concept-number">3</span>
+              <span>Separate Chaining Collision Handling</span>
+            </div>
+            <p class="concept-text">
+              When two distinct short codes map to the same bucket index, they are appended to a singly linked list (<code>URLRecord</code> nodes) pointed to by the bucket index. Deletion and searches traverse only that specific chain.
+            </p>
+          </div>
+
+          <div class="concept-item">
+            <div class="concept-title">
+              <span class="concept-number">4</span>
+              <span>Base-62 Code Generation</span>
+            </div>
+            <p class="concept-text">
+              Short codes are generated deterministically using Base-62 encoding over a monotonic counter using character set <code>[0-9A-Za-z]</code>, yielding ultra-compact lookup keys.
+            </p>
+          </div>
+
+          <div class="concept-item">
+            <div class="concept-title">
+              <span class="concept-number">5</span>
+              <span>File Persistence</span>
+            </div>
+            <p class="concept-text">
+              All URL records, click counts, and monotonic sequence counters are persisted to <code>data/urls.dat</code> with atomic temporary file writes and safe reloading across restarts.
+            </p>
+          </div>
+
+          <div class="concept-item">
+            <div class="concept-title">
+              <span class="concept-number">6</span>
+              <span>Time & Space Complexity</span>
+            </div>
+            <p class="concept-text">
+              Lookup & Deletion: <code>O(1 + &alpha;)</code> average, where <code>&alpha; = n / m</code> is the load factor.<br>
+              Shortening: <code>O(1)</code> amortized.<br>
+              URL Reverse Search: <code>O(m + n)</code> linear table scan.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle" class="modal-title">Confirm Record Deletion</h3>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete this URL record from the C Hash Table?</p>
+        <div class="modal-details">
+          <div><strong>Short Code:</strong> <span id="modalShortCode" class="code-badge-inline"></span></div>
+          <div class="modal-url"><strong>URL:</strong> <span id="modalOriginalUrl" class="text-muted link-truncate"></span></div>
+        </div>
+        <p class="text-danger-sm">This action will unlink the node from its bucket chain and immediately free its allocated memory.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="cancelDeleteBtn" class="btn btn-secondary">Cancel</button>
+        <button type="button" id="confirmDeleteBtn" class="btn btn-danger">Delete Record</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <p><strong>TinyURL</strong> &bull; Data Structures &amp; Algorithms in C &bull; Powered by GCC &amp; Pure C Backend</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
