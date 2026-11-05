@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "buildCommand": "make tinyurl || gcc -O2 -Wall -Wextra -std=c99 -Isrc src/*.c -o tinyurl",
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "frontend/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/r/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/style.css",
+      "dest": "frontend/style.css"
+    },
+    {
+      "src": "/script.js",
+      "dest": "frontend/script.js"
+    },
+    {
+      "src": "/",
+      "dest": "frontend/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/$1"
+    }
+  ]
+}
